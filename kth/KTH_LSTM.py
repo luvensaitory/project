@@ -19,7 +19,7 @@ import keras.backend as K
 from keras.models import Sequential
 from keras.layers.recurrent import LSTM, GRU # you can also try using GRU layers
 from keras.optimizers import RMSprop, Adadelta, adam, sgd # you can try all these optimizers
-from keras.layers.convolutional import Convolution2D
+from keras.layers.convolutional import Conv2D
 from keras.layers.core import Dense, Activation, Dropout, Reshape, Flatten
 from keras.layers.normalization import BatchNormalization
 from keras.layers.wrappers import TimeDistributed
@@ -54,7 +54,7 @@ def load_data_for_persons(root_folder, start_index, finish_index, frames_per_cli
     seg_prefix = "seg" # seq ID [1..4] follows
     seg_count = 4
 
-    data_array = np.array()
+    data_array = []
     classes_array = []
 
     # let's make a couple of loops to generate all of them
@@ -105,19 +105,20 @@ def load_data_for_persons(root_folder, start_index, finish_index, frames_per_cli
                     # preprocessing
                     current_seg = np.asarray(current_seg_temp)
                     current_seg = current_seg.astype('float32')
-                    data_array.append(current_seg)
+                    data_array.extend(current_seg)
                     if i==5:
                         if j==finish_index:
                             if k==rec_count:
-                                print(current_seg.shape)
-                                print(len(data_array))
+                                pass
+                                #print(current_seg.shape)
+                                #print(len(data_array))
                     classes_array.append(i)
     #data_array1 = data_array1.astype('float32')
     # # create one-hot vectors from output values
     classes_one_hot = np.zeros((len(classes_array), len(class_labels)))
     classes_one_hot[np.arange(len(classes_array)), classes_array] = 1
     # done
-    return (data_array, classes_one_hot)
+    return (np.array(data_array), classes_one_hot)
 
 # what you need to know about data, to build the model
 img_rows = 120
@@ -136,16 +137,16 @@ model = Sequential()
 # for higher accuracy, you will have to change the number and dimensions of layers.
 
 # three convolutional layers
-model.add(TimeDistributed(Convolution2D(4, 5, 5, subsample=(2, 2), border_mode='valid'), input_shape=(maxToAdd,img_rows,img_cols,1)))
+model.add(TimeDistributed(Conv2D(4, (5, 5), strides=(2, 2), padding='valid'), input_shape=(maxToAdd,img_rows,img_cols,1)))
 model.add(Activation('relu'))
 
 # not sure why I cannot add pooling layers
 #model.add(TimeDistributed(MaxPooling2D(pool_size=(2, 2))))
 
-model.add(TimeDistributed(Convolution2D(16, 3, 3, subsample=(2, 2), border_mode='valid')))
+model.add(TimeDistributed(Conv2D(16, (3, 3), strides=(2, 2), padding='valid')))
 model.add(Activation('relu'))
 
-model.add(TimeDistributed(Convolution2D(64, 3, 3, subsample=(2, 2), border_mode='valid')))
+model.add(TimeDistributed(Conv2D(64, (3, 3), strides=(2, 2), padding='valid')))
 model.add(Activation('relu'))
 
 # flatten and prepare to go for recurrent learning
@@ -161,7 +162,7 @@ model.add(Activation('relu'))
 #model.add(GRU(output_dim=50,return_sequences=False))
 
 # the LSTM layer performed better than GRU layers
-model.add(LSTM(output_dim =80, activation = 'tanh'))
+model.add(LSTM(units =80, activation = 'tanh'))
 
 # let's try some dropping out here
 model.add(Dropout(.1))
@@ -173,7 +174,7 @@ model.add(Dense(nb_classes, activation='softmax'))
 model.compile(loss='categorical_crossentropy', optimizer='rmsprop') #adam is faster, but you can use the others too.
 
 #training parameters
-batch_size = 16 # increase if your system can cope with more data
+batch_size = 8 # increase if your system can cope with more data
 nb_epochs = 12 # I once achieved 77.5% accuracy with 100 epochs. Feel free to change
 
 print ("Loading data")
@@ -183,10 +184,9 @@ X_train, y_train = load_data_for_persons(trg_data_root, 1, 25, maxToAdd)
 # use multiple epochs. I don't recommend using one user at a time, since
 # it prevents good shuffling.
 
-print("x is ", X_train.shape)
-print("y is ", y_train.shape)
 # perform training
-
+print ("X:\n", X_train.shape, "\n")
+print ("Y:\n", y_train.shape)
 '''
 model.fit(np.array(X_train), y_train, batch_size=batch_size, nb_epoch=nb_epochs, shuffle=True, verbose=1)
 
