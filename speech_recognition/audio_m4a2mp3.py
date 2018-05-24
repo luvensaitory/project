@@ -1,7 +1,7 @@
 import os
 
 path = "audio/"
-person_number = 2
+person_number = 8
 class_size = 100
 
 for i in range(1, person_number+1):

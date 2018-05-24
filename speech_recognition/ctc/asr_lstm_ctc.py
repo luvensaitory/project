@@ -250,8 +250,9 @@ def main():
       train_ler /= num_examples
 
       # 打印每一轮迭代的损失值，错误率
-      log = "Epoch {}/{}, train_cost = {:.3f}, train_ler = {:.3f}, time = {:.3f}"
-      print(log.format(curr_epoch+1, num_epochs, train_cost, train_ler,
+      if (curr_epoch+1)%50==0:
+        log = "Epoch {}/{}, train_cost = {:.3f}, train_ler = {:.3f}, time = {:.3f}"
+        print(log.format(curr_epoch+1, num_epochs, train_cost, train_ler,
                           time.time() - start))
     # 在进行了1200次训练之后，计算一次实际的测试，并且输出
     # 读取测试数据，这里读取的和训练数据的同一个样本
