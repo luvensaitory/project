@@ -27,7 +27,7 @@ from random import randint
 import gc
 # natural sorting
 import re
-
+flag = 0
 _nsre = re.compile('([0-9]+)')
 def natural_sort_key(s):
     return [int(text) if text.isdigit() else text.lower()
@@ -105,18 +105,17 @@ def load_data_for_persons(root_folder, start_index, finish_index, frames_per_cli
                     # preprocessing
                     current_seg = np.asarray(current_seg_temp)
                     current_seg = current_seg.astype('float32')
-                    data_array.extend(current_seg)
-                    if i==5:
-                        if j==finish_index:
-                            if k==rec_count:
-                                pass
-                                #print(current_seg.shape)
-                                #print(len(data_array))
+                    data_array.append(current_seg)
                     classes_array.append(i)
-    #data_array1 = data_array1.astype('float32')
+    
     # # create one-hot vectors from output values
     classes_one_hot = np.zeros((len(classes_array), len(class_labels)))
     classes_one_hot[np.arange(len(classes_array)), classes_array] = 1
+    
+    if flag==0:
+        temp = data_array[547][23]
+        data_array[547] = np.append(data_array[547], temp)
+        data_array[547] = data_array[547].reshape(25, 120, 160, 1)
     # done
     return (np.array(data_array), classes_one_hot)
 
@@ -161,6 +160,7 @@ model.add(Activation('relu'))
 #model.add(GRU(output_dim=100,return_sequences=True))
 #model.add(GRU(output_dim=50,return_sequences=False))
 
+
 # the LSTM layer performed better than GRU layers
 model.add(LSTM(units =80, activation = 'tanh'))
 
@@ -185,9 +185,6 @@ X_train, y_train = load_data_for_persons(trg_data_root, 1, 25, maxToAdd)
 # it prevents good shuffling.
 
 # perform training
-print ("X:\n", X_train.shape, "\n")
-print ("Y:\n", y_train.shape)
-'''
 model.fit(np.array(X_train), y_train, batch_size=batch_size, nb_epoch=nb_epochs, shuffle=True, verbose=1)
 
 # clean up the memory
@@ -196,11 +193,11 @@ y_train       = None
 X_val = None
 y_val = None
 gc.collect()
-
+flag = 1
 print("Testing")
 
 # load test data: in this case, person 9
-X_test, y_test = load_data_for_persons(trg_data_root, 9, 9, maxToAdd)
+X_test, y_test = load_data_for_persons(trg_data_root, 14, 14, maxToAdd)
 print('Total no. of testing samples used:', y_test.shape[0])
 
 preds = model.predict(np.array(X_test))
@@ -222,13 +219,13 @@ print('Validation accuracy: ', 100*accurate_count/len(preds)),' %'
 print('Confusion matrix:')
 print(class_labels)
 print(confusion_matrix)
-'''
-'''
-#save the model
-jsonstring  = model.to_json()
-with open("KTH_LSTM.json",'wb') as f:
-    f.write(jsonstring)
-model.save_weights("KTH_LSTM.h5",overwrite=True)
 
-# done.
-'''
+# 模型結構存檔
+from keras.models import model_from_json
+json_string = model.to_json()
+with open("kth.config", "w") as text_file:
+    text_file.write(json_string)
+    
+# 模型訓練結果存檔
+model.save_weights("kth.weight")
+model.save("kth.h5")
