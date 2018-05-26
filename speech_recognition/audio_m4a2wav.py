@@ -1,7 +1,9 @@
 import os
+import librosa
 
 path = "audio/"
-person_number = 8
+fp = open('people.txt', 'r')
+person_number = (int)(fp.readline())
 class_size = 100
 
 for i in range(1, person_number+1):
@@ -22,10 +24,25 @@ for i in range(1, person_number+1):
 
     for j in range(1, class_size+1):
         if j<10:
-            filename = personname + "_00" + str(j)
+            fname = personname + "_00" + str(j) 
+            output = fname + ".wav"
+            filename = fname + ".m4a"
         elif j>=10 and j<100:
-            filename = personname + "_0" + str(j)
+            fname = personname + "_0" + str(j)
+            output = fname + ".wav"
+            filename = fname + ".m4a"
         else:
-            filename = personname + "_" + str(j)
-        ffmpeg = "ffmpeg -i " + path2person + filename + ".m4a " + newdir + "/" + filename + ".wav"
+            fname = personname + "_" + str(j)
+            output = fname + ".wav"
+            filename = fname + ".m4a"
+        y, sr = librosa.load(path2person+filename)
+        sec = librosa.get_duration(y=y, sr=sr)
+        atempo = sec/3
+        if atempo>=0.5 and atempo<=2:
+            ffmpeg = "ffmpeg -i " + path2person + filename + " -filter:a \"atempo=" + str(atempo) + "\" -y " + newdir + "/" + output
+        elif atempo>2:
+            ffmpeg = "ffmpeg -i " + path2person + filename + " -filter:a \"atempo=2.0, atempo=" + str(atempo/2.0) + "\" -y " + newdir + "/" + output
+        else: 
+            ffmpeg = "ffmpeg -i " + path2person + filename + " -filter:a \"atempo=0.5, atempo=" + str(atempo/0.5) + "\" -y " + newdir + "/" + output
+        
         os.system(ffmpeg)
