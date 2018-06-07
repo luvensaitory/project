@@ -1,10 +1,14 @@
 #coding=utf-8
 import time
+import os
+import sys
+sys.path.insert(0, "/home/speech/deeplearning/lib/python3.5/site-packages")
 
 import tensorflow as tf
 import scipy.io.wavfile as wav
 import numpy as np
-
+import librosa
+import pandas as pd
 from six.moves import xrange as range
 
 try:
@@ -14,6 +18,9 @@ except ImportError:
     raise ImportError
 
 
+bad_data = pd.read_csv("bad.csv", header=None)
+bad_data = bad_data.values.reshape((bad_data.shape[1],))
+classes = 90
 
 # 常量
 SPACE_TOKEN = '<space>'
@@ -21,12 +28,12 @@ SPACE_INDEX = 0
 FIRST_INDEX = ord('a') - 1  # 0 is reserved to space
 
 # mfcc默认提取出来的一帧13个特征
-num_features = 13
+num_features = 20
 # 26个英文字母 + 1个空白 + 1个no label = 28 label个数
 num_classes = ord('z') - ord('a') + 1 + 1 + 1
 
 # 迭代次数
-num_epochs = 200
+num_epochs = 00
 # lstm隐藏单元数
 num_hidden = 40
 # 2层lstm网络
@@ -37,7 +44,7 @@ batch_size = 1
 initial_learning_rate = 0.01
 
 # 样本个数
-num_examples = 1
+num_examples = 14
 # 一个epoch有多少个batch
 num_batches_per_epoch = int(num_examples/batch_size)
 
@@ -63,32 +70,59 @@ def sparse_tuple_from(sequences, dtype=np.int32):
     return indices, values, shape
 
 
-def get_audio_feature():
+def get_audio_feature(person, label):
   '''
   获取wav文件提取mfcc特征之后的数据
   '''
+  path = "../audio/"
   
-  audio_filename = "audio.wav"
+  if person<10:
+      personname = "00" + str(person)
+  elif person>=10 and person<100:
+      personname = "0" + str(person)
+  else:
+      personname = str(person)
+
+  if label<10:
+      labelname = "00" + str(label)
+  elif label>=10 and label<100:
+      labelname = "0" + str(label)
+  else:
+      labelname = str(label)
   
+
+  audio_filename = path + personname + "wav/" + personname + "_" + labelname + ".wav"
+
   #读取wav文件内容，fs为采样率， audio为数据
-  fs, audio = wav.read(audio_filename)
+  y, sr = librosa.load(audio_filename)
   
   #提取mfcc特征
-  inputs = mfcc(audio, samplerate=fs)
+  inputs = librosa.feature.mfcc(y=y, sr=sr)
   # 对特征数据进行归一化，减去均值除以方差
   feature_inputs = np.asarray(inputs[np.newaxis, :])
+  a = feature_inputs.shape[1]
+  b = feature_inputs.shape[2]
+  feature_inputs = feature_inputs.reshape((1, b, a))
   feature_inputs = (feature_inputs - np.mean(feature_inputs))/np.std(feature_inputs)
   
-  #特征数据的序列长度
+    #特征数据的序列长度
   feature_seq_len = [feature_inputs.shape[1]]
+
   
   return feature_inputs, feature_seq_len
   
-def get_audio_label():
+def get_audio_label(label):
   '''
   将label文本转换成整数序列，然后再换成稀疏三元组
   '''
-  target_filename = 'label.txt'
+  if label<10:
+      labelname = "00" + str(label)
+  elif label>=10 and label<100:
+      labelname = "0" + str(label)
+  else:
+      labelname = str(label)
+  
+  target_filename = "label/" + labelname + ".txt"
   
   with open(target_filename, 'r') as f:
     #原始文本为“she had your dark suit in greasy wash water all year”
@@ -186,7 +220,7 @@ def inference(inputs, seq_len):
 
 def main():
   # 输入特征数据，形状为：[batch_size, 序列长度，一帧特征数]
-  inputs = tf.placeholder(tf.float32, [None, None, num_features])
+  inputs = tf.placeholder(tf.float32, [None, None, 20])
 
   # 输入数据的label，定义成稀疏sparse_placeholder会生成稀疏的tensor：SparseTensor
   # 这个结构可以直接输入给ctc求loss
@@ -230,33 +264,37 @@ def main():
       train_cost = train_ler = 0
       start = time.time()
 
-      for batch in range(num_batches_per_epoch):
-        #获取训练数据，本例中只去一个样本的训练数据
-        train_inputs, train_seq_len = get_audio_feature()
-        # 获取这个样本的label
-        train_targets = get_audio_label()
-        feed = {inputs: train_inputs,
-                  targets: train_targets,
-                  seq_len: train_seq_len}
+      for label_num in range(1, 101):
+        if label_num in bad_data:
+          pass
+        else:
+          for batch in range(1, num_examples-1):
+            #获取训练数据，本例中只去一个样本的训练数据
+            train_inputs, train_seq_len = get_audio_feature(batch, label_num)
+            # 获取这个样本的label
+            train_targets = get_audio_label(label_num)
+            feed = {inputs: train_inputs,
+                      targets: train_targets,
+                      seq_len: train_seq_len}
 
-        # 一次训练，更新参数
-        batch_cost, _ = session.run([cost, optimizer], feed)
-        # 计算累加的训练的损失值
-        train_cost += batch_cost * batch_size
-        # 计算训练集的错误率
-        train_ler += session.run(ler, feed_dict=feed)*batch_size
+            # 一次训练，更新参数
+            batch_cost, _ = session.run([cost, optimizer], feed)
+            # 计算累加的训练的损失值
+            train_cost += batch_cost * batch_size
+            # 计算训练集的错误率
+            train_ler += session.run(ler, feed_dict=feed)*batch_size
 
-      train_cost /= num_examples
-      train_ler /= num_examples
+          train_cost /= num_examples
+          train_ler /= num_examples
 
       # 打印每一轮迭代的损失值，错误率
-      if (curr_epoch+1)%50==0:
-        log = "Epoch {}/{}, train_cost = {:.3f}, train_ler = {:.3f}, time = {:.3f}"
-        print(log.format(curr_epoch+1, num_epochs, train_cost, train_ler,
-                          time.time() - start))
+        if (curr_epoch+1)%50==0:
+          log = "Epoch {}/{}, train_cost = {:.3f}, train_ler = {:.3f}, time = {:.3f}"
+          print(log.format(curr_epoch+1, num_epochs, train_cost, train_ler,
+                            time.time() - start))
     # 在进行了1200次训练之后，计算一次实际的测试，并且输出
     # 读取测试数据，这里读取的和训练数据的同一个样本
-    test_inputs, test_seq_len = get_audio_feature()
+    test_inputs, test_seq_len = get_audio_feature(num_examples)
     test_targets = get_audio_label()
     test_feed = {inputs: test_inputs,
                   targets: test_targets,
