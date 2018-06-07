@@ -5,6 +5,9 @@ import numpy as np
 # for file operations
 import os
 import librosa
+import pandas as pd
+import sys
+sys.path.insert(0, "/home/speech/deeplearning/lib/python3.5/site-packages")
 
 import keras.backend as K
 from keras.models import Sequential
@@ -17,10 +20,13 @@ from keras.layers.wrappers import TimeDistributed
 from random import randint
 import gc
 
+bad_data = pd.read_csv("bad.csv", header=None)
+bad_data = bad_data.values.reshape((bad_data.shape[1],))
+classes = 90
 
 def load_audio(start_person, end_person):
     
-    label = [ num for num in range(0, 100)]
+    label = [ num for num in range(0, classes)]
  
     audio_path = "audio/"
 
@@ -40,22 +46,28 @@ def load_audio(start_person, end_person):
             person_path = audio_path + "/wav" + str(person) + "/"
             people = str(person)
         
+        count = 0
         for person_audio in range(1, 101):
-            #audio_name, ex: 001_001.wav
-            if person_audio<10:
-                audio_name = person_path + people + "_00" + str(person_audio) + ".wav"
-            elif person_audio>=10 and person_audio<100:
-                audio_name = person_path + people + "_0" + str(person_audio) + ".wav"
+            if person_audio in bad_data:
+                pass
             else:
-                audio_name = person_path + people + "_" + str(person_audio) + ".wav"
-            
-            y, sr = librosa.load(audio_name)
-            mfccs_feature = librosa.feature.mfcc(y=y, sr=sr)
-            mfccs = np.array(mfccs_feature[:, 0:120])
-            mfccs = (mfccs - np.mean(mfccs))/np.std(mfccs)
-            audio_array.append(mfccs)
-            class_array.append(person_audio-1)
-    
+                #audio_name, ex: 001_001.wav
+                if person_audio<10:
+                    audio_name = person_path + people + "_00" + str(person_audio) + ".wav"
+                elif person_audio>=10 and person_audio<100:
+                    audio_name = person_path + people + "_0" + str(person_audio) + ".wav"
+                else:
+                    audio_name = person_path + people + "_" + str(person_audio) + ".wav"
+                
+                y, sr = librosa.load(audio_name)
+                mfccs_feature = librosa.feature.mfcc(y=y, sr=sr)
+                mfccs = np.array(mfccs_feature[:, 0:120])
+                mfccs = (mfccs - np.mean(mfccs))/np.std(mfccs)
+                
+                audio_array.append(mfccs)
+                class_array.append(count)
+                count = count + 1
+                
     label_sparse = np.zeros((len(class_array), len(label)))
     label_sparse[np.arange(len(class_array)), class_array] = 1
     #print("data_array: ", np.array(audio_array).shape)
@@ -63,7 +75,7 @@ def load_audio(start_person, end_person):
     return np.array(audio_array), label_sparse
 
 #label
-label = [ num for num in range(0, 100)]
+label = [ num for num in range(0, classes)]
 
 #build model......
 
@@ -100,18 +112,19 @@ model.add(Activation('relu'))
 model.add(Reshape((20, 120)))
 model.add(LSTM(units=80, activation='tanh'))
 model.add(Dropout(.1))
-model.add(Dense(80, activation='tanh'))
-model.add(Dense(100, activation='softmax'))
+model.add(Dense(45, activation='tanh'))
+model.add(Dense(90, activation='softmax'))
 
 model.compile(loss='categorical_crossentropy', optimizer='rmsprop')
 
-batch_size = 64
-epochs = 100
+batch_size = 50
+epochs = 50
 
 #load data
 print("\nTraining......\n")
-X_train, y_train = load_audio(1, 11)
+X_train, y_train = load_audio(1, 13)
 X_train = X_train[:, np.newaxis, :, :]
+print(X_train.shape)
 #training
 model.fit(X_train, y_train, batch_size=batch_size, nb_epoch=epochs, shuffle=True, verbose=1)
 
@@ -120,7 +133,7 @@ y_train = None
 
 #testing
 print("\nTesting......\n")
-X_test, y_test = load_audio(12, 12)
+X_test, y_test = load_audio(14, 14)
 X_test = X_test[:, np.newaxis, :, :]
 
 preds = model.predict(X_test)

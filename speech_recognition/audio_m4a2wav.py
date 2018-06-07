@@ -1,5 +1,7 @@
 import os
 import librosa
+import sys
+sys.path.insert(0, "/home/speech/deeplearning/lib/python3.5/site-packages")
 
 path = "audio/"
 fp = open('people.txt', 'r')
