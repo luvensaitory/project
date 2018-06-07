@@ -86,12 +86,11 @@ model.add(Dense(45, activation='tanh'))
 model.add(Dense(90, activation='softmax'))
 model.compile(loss='categorical_crossentropy', optimizer='rmsprop')
 
-batch_size = 16
-epochs = 100
+batch_size = 50
+epochs = 300
 
 #load data
-X_train, y_train = load_audio(1, 14)
-print(X_train.shape)
+X_train, y_train = load_audio(1, 13)
 #training
 model.fit(X_train, y_train, batch_size=batch_size, nb_epoch=epochs, shuffle=True, verbose=1)
 
@@ -99,7 +98,8 @@ X_train = None
 y_train = None
 
 #testing
-X_test, y_test = load_audio(4, 4)
+print("\nTesting......\n")
+X_test, y_test = load_audio(14, 14)
 
 preds = model.predict(X_test)
 

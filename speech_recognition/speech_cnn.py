@@ -118,13 +118,12 @@ model.add(Dense(90, activation='softmax'))
 model.compile(loss='categorical_crossentropy', optimizer='rmsprop')
 
 batch_size = 50
-epochs = 50
+epochs = 300
 
 #load data
 print("\nTraining......\n")
 X_train, y_train = load_audio(1, 13)
 X_train = X_train[:, np.newaxis, :, :]
-print(X_train.shape)
 #training
 model.fit(X_train, y_train, batch_size=batch_size, nb_epoch=epochs, shuffle=True, verbose=1)
 
@@ -148,7 +147,7 @@ for i in range(0, len(preds)):
     if np.argmax(preds[i]) == np.argmax(np.array(y_test[i])):
         accuracy += 1
 
-print("Validation accuracy: ", accuracy/len(preds), "\nPercentage: ", 100*accuracy/len(preds), "%")
+print("Validation accuracy: ", 100*accuracy/len(preds), "%")
 #print("Confusion matrix:")
 #print(label)
 #print(confusion_matrix)
