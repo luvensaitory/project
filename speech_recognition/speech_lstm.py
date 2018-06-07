@@ -79,8 +79,8 @@ batch_size = 16
 epochs = 100
 
 #load data
-X_train, y_train = load_audio(1, 7)
-
+X_train, y_train = load_audio(1, 12)
+print(X_train.shape)
 #training
 model.fit(X_train, y_train, batch_size=batch_size, nb_epoch=epochs, shuffle=True, verbose=1)
 
@@ -88,7 +88,7 @@ X_train = None
 y_train = None
 
 #testing
-X_test, y_test = load_audio(8, 8)
+X_test, y_test = load_audio(4, 4)
 
 preds = model.predict(X_test)
 
@@ -102,7 +102,7 @@ for i in range(0, len(preds)):
     if np.argmax(preds[i]) == np.argmax(np.array(y_test[i])):
         accuracy += 1
 
-print("Validation accuracy: ", 100%accuracy/len(preds)), ' %'
-print("Confusion matrix:")
-print(label)
-print(confusion_matrix)
+print("Validation accuracy: ", 100*accuracy/len(preds), " %")
+#print("Confusion matrix:")
+#print(label)
+#print(confusion_matrix)
