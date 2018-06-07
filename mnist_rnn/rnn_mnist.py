@@ -20,7 +20,6 @@ X_test = X_test.reshape(-1, 28, 28) / 255.
 y_train = np_utils.to_categorical(y_train, num_classes=10)
 y_test = np_utils.to_categorical(y_test, num_classes=10)
 
-
 # 建立簡單的線性執行的模型
 model = Sequential()
 # 加 RNN 隱藏層(hidden layer)
