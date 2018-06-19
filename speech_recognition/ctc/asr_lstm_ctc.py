@@ -32,7 +32,7 @@ num_features = 20
 num_classes = ord('z') - ord('a') + 1 + 1 + 1
 
 # 迭代次数
-num_epochs = 100
+num_epochs = 500
 # lstm隐藏单元数
 num_hidden = 40
 # 2层lstm网络
@@ -263,11 +263,11 @@ def main():
       train_cost = train_ler = 0
       start = time.time()
 
-      for label_num in range(1, 101):
+      for label_num in range(1, 11):
         if label_num in bad_data:
           pass
         else:
-          for batch in range(1, num_examples-1):
+          for batch in range(1, 6):
             #获取训练数据，本例中只去一个样本的训练数据
             train_inputs, train_seq_len = get_audio_feature(batch, label_num)
             # 获取这个样本的label
@@ -292,26 +292,29 @@ def main():
           print(log.format(curr_epoch+1, num_epochs, train_cost, train_ler,
                             time.time() - start))
     accuracy = 0
-    for test_num in range(1, 101):
-      # 在进行了1200次训练之后，计算一次实际的测试，并且输出
-      # 读取测试数据，这里读取的和训练数据的同一个样本
-      test_inputs, test_seq_len = get_audio_feature(num_examples, test_num)
-      test_targets = get_audio_label(test_num)
-      test_feed = {inputs: test_inputs,
-                    targets: test_targets,
-                    seq_len: test_seq_len}
-      d = session.run(decoded[0], feed_dict=test_feed)
-      #if np.array_equal(np.array(d), np.array(test_targets)) == True :
-        #accuracy += 1
-      # 将得到的测试语音经过ctc解码后的整数序列转换成字母
-      str_decoded = ''.join([chr(x) for x in np.asarray(d[1]) + FIRST_INDEX])
-      # 将no label转换成空
-      str_decoded = str_decoded.replace(chr(ord('z') + 1), '')
-      # 将空白转换成空格
-      str_decoded = str_decoded.replace(chr(ord('a') - 1), ' ')
-      # 打印最后的结果
-      print('Decoded:\n%s' % str_decoded)
-    
+    for test_num in range(1, 11):
+      if test_num in bad_data:
+          pass
+      else:  
+        # 在进行了1200次训练之后，计算一次实际的测试，并且输出
+        # 读取测试数据，这里读取的和训练数据的同一个样本
+        test_inputs, test_seq_len = get_audio_feature(num_examples, test_num)
+        test_targets = get_audio_label(test_num)
+        test_feed = {inputs: test_inputs,
+                        targets: test_targets,
+                        seq_len: test_seq_len}
+        d = session.run(decoded[0], feed_dict=test_feed)
+        #if np.array_equal(np.array(d), np.array(test_targets)) == True :
+            #accuracy += 1
+        # 将得到的测试语音经过ctc解码后的整数序列转换成字母
+        str_decoded = ''.join([chr(x) for x in np.asarray(d[1]) + FIRST_INDEX])
+        # 将no label转换成空
+        str_decoded = str_decoded.replace(chr(ord('z') + 1), '')
+        # 将空白转换成空格
+        str_decoded = str_decoded.replace(chr(ord('a') - 1), ' ')
+        # 打印最后的结果
+        print('Decoded: %s' % str_decoded)
+        
     print("Accuracy: ", accuracy, "%")
       
 
