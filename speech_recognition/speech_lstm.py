@@ -42,13 +42,13 @@ def load_audio(start_person, end_person, ignore_num=None):
             if person == ignore_num:
                 continue
         if person<10:
-            person_path = audio_path + "/wav00" + str(person) + "/"
+            person_path = audio_path + "/fixwav00" + str(person) + "/"
             people = "00" + str(person)
         elif person>=10 and person<100:
-            person_path = audio_path + "/wav0" + str(person) + "/"
+            person_path = audio_path + "/fixwav0" + str(person) + "/"
             people = "0" + str(person)
         else:
-            person_path = audio_path + "/wav" + str(person) + "/"
+            person_path = audio_path + "/fixwav" + str(person) + "/"
             people = str(person)
         
         count = 0
