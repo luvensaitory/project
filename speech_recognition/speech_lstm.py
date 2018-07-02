@@ -95,7 +95,7 @@ batch_size = 50
 epochs = 300
 
 #load data
-X_train, y_train = load_audio(1, 13, 14)
+X_train, y_train = load_audio(1, 14)
 #training
 model.fit(X_train, y_train, batch_size=batch_size, nb_epoch=epochs, shuffle=True, verbose=1)
 
