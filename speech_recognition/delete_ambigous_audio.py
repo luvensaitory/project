@@ -6,7 +6,7 @@ bad_data = pd.read_csv("bad.csv", header=None)
 bad_data = bad_data.values.reshape((bad_data.shape[1],))
 
 
-path = "audio/wav"
+path = "audio/fixwav"
 fp = open('people.txt', 'r')
 person_number = (int)(fp.readline())
 class_size = 100
