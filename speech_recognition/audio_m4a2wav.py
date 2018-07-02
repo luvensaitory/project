@@ -1,5 +1,4 @@
 import os
-import librosa
 import sys
 sys.path.insert(0, "/home/speech/deeplearning/lib/python3.5/site-packages")
 
@@ -20,7 +19,7 @@ for i in range(1, person_number+1):
     path2person = path + personname + "/"
     
     #make new directory for storing files that be modified using ffmpeg
-    newdir = path + "wav" + personname 
+    newdir =  path + "wav" + personname 
     mkdir = "mkdir " + newdir
     os.system(mkdir)
 
@@ -37,14 +36,5 @@ for i in range(1, person_number+1):
             fname = personname + "_" + str(j)
             output = fname + ".wav"
             filename = fname + ".m4a"
-        y, sr = librosa.load(path2person+filename)
-        sec = librosa.get_duration(y=y, sr=sr)
-        atempo = sec/3
-        if atempo>=0.5 and atempo<=2:
-            ffmpeg = "ffmpeg -i " + path2person + filename + " -filter:a \"atempo=" + str(atempo) + "\" -y " + newdir + "/" + output
-        elif atempo>2:
-            ffmpeg = "ffmpeg -i " + path2person + filename + " -filter:a \"atempo=2.0, atempo=" + str(atempo/2.0) + "\" -y " + newdir + "/" + output
-        else: 
-            ffmpeg = "ffmpeg -i " + path2person + filename + " -filter:a \"atempo=0.5, atempo=" + str(atempo/0.5) + "\" -y " + newdir + "/" + output
-        
+        ffmpeg = "ffmpeg -i " + path2person + filename + " " + newdir + "/" + output
         os.system(ffmpeg)

@@ -20,11 +20,13 @@ from keras.layers.wrappers import TimeDistributed
 from random import randint
 import gc
 
+np.random.seed(1432)
+
 bad_data = pd.read_csv("bad.csv", header=None)
 bad_data = bad_data.values.reshape((bad_data.shape[1],))
 classes = 90
 
-def load_audio(start_person, end_person):
+def load_audio(start_person, end_person, ignore_num=None):
     
     label = [ num for num in range(0, classes)]
  
@@ -36,6 +38,9 @@ def load_audio(start_person, end_person):
     for person in range(start_person, end_person+1):
         #person_path, ex: /wav001/
         #people     , ex: 001
+        if ignore_num != None:
+            if person == ignore_num:
+                continue
         if person<10:
             person_path = audio_path + "/wav00" + str(person) + "/"
             people = "00" + str(person)
@@ -90,7 +95,7 @@ batch_size = 50
 epochs = 300
 
 #load data
-X_train, y_train = load_audio(1, 13)
+X_train, y_train = load_audio(1, 13, 14)
 #training
 model.fit(X_train, y_train, batch_size=batch_size, nb_epoch=epochs, shuffle=True, verbose=1)
 
