@@ -39,7 +39,7 @@ def load_audio(start_person, end_person, ignore_num=None):
         #person_path, ex: /wav001/
         #people     , ex: 001
         if ignore_num != None:
-            if person == ignore_num:
+            if person in ignore_num:
                 continue
         if person<10:
             person_path = audio_path + "/fixwav00" + str(person) + "/"
@@ -95,7 +95,9 @@ batch_size = 100
 epochs = 100
 
 #load data
-X_train, y_train = load_audio(1, 13)
+train_person = 14
+ignore_list = [ train_person + x * 14 for x in range(5) ]
+X_train, y_train = load_audio(1, 70, ignore_list)
 #training
 model.fit(X_train, y_train, batch_size=batch_size, nb_epoch=epochs, shuffle=True, verbose=1)
 
