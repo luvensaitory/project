@@ -91,7 +91,7 @@ model.add(Dense(45, activation='tanh'))
 model.add(Dense(90, activation='softmax'))
 model.compile(loss='categorical_crossentropy', optimizer='rmsprop')
 
-batch_size = 10
+batch_size = 100
 epochs = 100
 
 #load data

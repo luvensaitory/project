@@ -27,7 +27,7 @@ for i in range(1, person_number+1):
         os.system(mkdir)
 
         pitch = 0.7 + k * 0.1
-        if pitch == 0.1:
+        if pitch == 1.0:
             pitch += 0.1
         for j in range(1, class_size+1):
             if j<10:
