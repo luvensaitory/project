@@ -9,6 +9,7 @@ import pandas as pd
 import sys
 sys.path.insert(0, "/home/speech/deeplearning/lib/python3.5/site-packages")
 
+np.random.seed(1432)
 import keras.backend as K
 from keras.models import Sequential
 from keras.layers.recurrent import LSTM, GRU # you can also try using GRU layers
@@ -20,7 +21,6 @@ from keras.layers.wrappers import TimeDistributed
 from random import randint
 import gc
 
-np.random.seed(1432)
 
 bad_data = pd.read_csv("bad.csv", header=None)
 bad_data = bad_data.values.reshape((bad_data.shape[1],))
